@@ -195,8 +195,8 @@ public class EdgeConvertFileParser {
       StringTokenizer stTables, stNatFields, stRelFields, stNatRelFields, stField;
       EdgeTable tempTable;
       EdgeField tempField;
-      currentLine = br.readLine();
-      currentLine = br.readLine(); //this should be "Table: "
+      currentLine = ((br.readLine() != null) ? br.readLine() : "error in first read");
+      currentLine = ((br.readLine() != null) ? br.readLine() : "error in second read");; //this should be "Table: "
       while (currentLine.startsWith("Table: ")) {
          numFigure = Integer.parseInt(currentLine.substring(currentLine.indexOf(" ") + 1)); //get the Table number
          currentLine = br.readLine(); //this should be "{"
@@ -305,11 +305,9 @@ public class EdgeConvertFileParser {
       } // try
       catch (FileNotFoundException fnfe) {
          System.out.println("Cannot find \"" + inputFile.getName() + "\".");
-         System.exit(0);
       } // catch FileNotFoundException
       catch (IOException ioe) {
          System.out.println(ioe);
-         System.exit(0);
       } // catch IOException
    } // openFile()
 } // EdgeConvertFileHandler

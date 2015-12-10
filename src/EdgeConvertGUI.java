@@ -477,7 +477,7 @@ public class EdgeConvertGUI {
       jfDR = new JFrame(DEFINE_RELATIONS);
       jfDR.setSize(HORIZ_SIZE, VERT_SIZE);
       jfDR.setLocation(HORIZ_LOC, VERT_LOC);
-      jfDR.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+      jfDR.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       jfDR.addWindowListener(edgeWindowListener);
       jfDR.getContentPane().setLayout(new BorderLayout());
 
@@ -1144,6 +1144,7 @@ public class EdgeConvertGUI {
          while (outputDir == null) {
             JOptionPane.showMessageDialog(null, "You have not selected a path that contains valid output definition files yet.\nPlease select a path now.");
             setOutputDir();
+            return;
          }
          getOutputClasses(); //in case outputDir was set before a file was loaded and EdgeTable/EdgeField objects created
          sqlString = getSQLStatements();
@@ -1272,7 +1273,7 @@ public class EdgeConvertGUI {
          if ((ae.getSource() == jmiDTHelpAbout) || (ae.getSource() == jmiDRHelpAbout)) {
             JOptionPane.showMessageDialog(null, "EdgeConvert ERD To DDL Conversion Tool\n" +
                                                 "by Stephen A. Capperell\n" +
-                                                "© 2007-2008");
+                                                "ï¿½ 2007-2008");
          }
       } // EdgeMenuListener.actionPerformed()
    } // EdgeMenuListener

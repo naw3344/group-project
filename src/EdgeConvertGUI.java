@@ -1141,13 +1141,16 @@ public class EdgeConvertGUI {
    
    class CreateDDLButtonListener implements ActionListener {
       public void actionPerformed(ActionEvent ae) {
+    	  sqlString = getSQLStatements();
          while (outputDir == null) {
             JOptionPane.showMessageDialog(null, "You have not selected a path that contains valid output definition files yet.\nPlease select a path now.");
             setOutputDir();
             return;
          }
-         getOutputClasses(); //in case outputDir was set before a file was loaded and EdgeTable/EdgeField objects created
-         sqlString = getSQLStatements();
+         
+         getOutputClasses(); //in case outputDir was set before a file was loaded and EdgeTable/EdgeField objects created      
+         
+
          if (sqlString.equals(EdgeConvertGUI.CANCELLED)) {
             return;
          }

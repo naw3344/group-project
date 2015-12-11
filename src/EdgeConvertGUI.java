@@ -221,6 +221,7 @@ public class EdgeConvertGUI {
                   String selText = dlmDTFieldsTablesAll.getElementAt(selIndex).toString();
                   setCurrentDTField(selText); //set pointer to the selected field
                   enableControls();
+                  System.out.println("Artifical Break Point");
                   jrbDataType[currentDTField.getDataType()].setSelected(true); //select the appropriate radio button, based on value of dataType
                   if (jrbDataType[0].isSelected()) { //this is the Varchar radio button
                      jbDTVarchar.setEnabled(true); //enable the Varchar button
@@ -1141,16 +1142,13 @@ public class EdgeConvertGUI {
    
    class CreateDDLButtonListener implements ActionListener {
       public void actionPerformed(ActionEvent ae) {
-    	  sqlString = getSQLStatements();
          while (outputDir == null) {
             JOptionPane.showMessageDialog(null, "You have not selected a path that contains valid output definition files yet.\nPlease select a path now.");
             setOutputDir();
             return;
          }
-         
-         getOutputClasses(); //in case outputDir was set before a file was loaded and EdgeTable/EdgeField objects created      
-         
-
+         getOutputClasses(); //in case outputDir was set before a file was loaded and EdgeTable/EdgeField objects created
+         sqlString = getSQLStatements();
          if (sqlString.equals(EdgeConvertGUI.CANCELLED)) {
             return;
          }

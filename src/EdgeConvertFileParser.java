@@ -1,6 +1,18 @@
 import java.io.*;
 import java.util.*;
 import javax.swing.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Node;
+import org.w3c.dom.Element;
 
 public class EdgeConvertFileParser {
    //private String filename = "test.edg";
@@ -9,6 +21,7 @@ public class EdgeConvertFileParser {
    private BufferedReader br;
    private String currentLine;
    private ArrayList alTables, alFields, alConnectors;
+   private ArrayList<XMLTable> alXML;
    private EdgeTable[] tables;
    private EdgeField[] fields;
    private EdgeField tempField;
@@ -131,14 +144,192 @@ public class EdgeConvertFileParser {
       } // while()
    } // parseEdgeFile()
 
-   private void ParseXML() throws IOException{
+   private void ParseXML(File f) throws IOException{
+	   DocumentBuilder builder;
+	   Document doc;
+	   XPath path;
+	   int numAtt = 0;
 	   
+	   try {
+		   DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		   builder = dbFactory.newDocumentBuilder();
+		   XPathFactory xpfactory = XPathFactory.newInstance();
+		   path = xpfactory.newXPath();
+		   
+		   doc = builder.parse(f);
+		   
+		   NodeList nlTables = (NodeList) path.compile("/Project/Models/DBTable").evaluate(doc, XPathConstants.NODESET);
+		   
+		   numFigure = 0;
+		   
+		   alXML = new ArrayList<XMLTable>();
+		   
+		   for (int i = 0; i < nlTables.getLength(); i++) {
+			   Node nTable = nlTables.item(i);
+			   text = ((Element) nTable).getAttribute("Name");
+			   if (isTableDup(text)) {
+                   JOptionPane.showMessageDialog(null, "There are multiple tables called " + text + " in this diagram.\nPlease rename all but one of them and try again.");
+                   EdgeConvertGUI.setReadSuccess(false);
+                   break;
+               }			   
+			   alTables.add(new EdgeTable(numFigure + DELIM + text));
+			   NodeList nlChildren = ((Element) nTable).getElementsByTagName("ModelChildren");
+			   NodeList nlTo = ((Element) nTable).getElementsByTagName("ToSimpleRelationships");
+			   String to = "";
+			   if (nlTo.getLength() > 0) {
+				   NodeList nlFK = ((Element) nlTo.item(0)).getElementsByTagName("DBForeignKey");
+				   to = ((Element) nlFK.item(0)).getAttribute("Idref");
+			   }
+			   NodeList nlFrom = ((Element) nTable).getElementsByTagName("FromSimpleRelationships");
+			   String from = "";
+			   if (nlFrom.getLength() > 0) {
+				   NodeList nlFK = ((Element) nlFrom.item(0)).getElementsByTagName("DBForeignKey");
+				   from = ((Element) nlFK.item(0)).getAttribute("Idref");
+			   }
+			   XMLTable tempXML = new XMLTable(numFigure, to, from);
+			   alXML.add(tempXML);
+			   
+			   for (int j = 0; j < nlChildren.getLength(); j++) {
+				   NodeList nlAttributes = ((Element) nlChildren.item(j)).getElementsByTagName("DBColumn");
+				   for (int k = 0; k < nlAttributes.getLength(); k++) {
+					   Node nAttribute = nlAttributes.item(k);
+					   boolean isPK = false;
+					   if (((Element) nAttribute).getAttribute("PrimaryKey") == "true") {
+						   isPK = true;
+					   }
+					   text = ((Element) nAttribute).getAttribute("Name") + DELIM + numFigure;
+					   tempField = new EdgeField(numAtt + DELIM + text);
+					   tempField.setIsPrimaryKey(isPK);
+		               alFields.add(tempField);
+		               EdgeTable et = (EdgeTable) alTables.get(i);
+		               et.addNativeField(numAtt);
+		               numAtt += 1;
+				   }
+			   }			   
+			   numFigure += 1;
+		   }
+	   
+	   } catch (ParserConfigurationException pce) {
+		   System.out.println("An error occured before parsing");
+		   System.exit(0);
+	   } catch (SAXException se) {
+		   System.out.println("An error occured while parsing");
+		   System.exit(0);
+	   } catch (XPathExpressionException xee) {
+		   System.out.println("An error occured while reading xml");
+		   System.exit(0);
+	   }
    }
    
-   private void ParseDia() throws IOException{
+   private void ParseDia(File f) throws IOException{
+	   DocumentBuilder builder;
+	   Document doc;
+	   XPath path;
+	   int numAtt = 0;
 	   
+	   try {
+		   DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		   builder = dbFactory.newDocumentBuilder();
+		   XPathFactory xpfactory = XPathFactory.newInstance();
+		   path = xpfactory.newXPath();
+		   
+		   doc = builder.parse(f);
+		   
+		   NodeList nlTables = (NodeList) path.compile("/diagram/layer/object").evaluate(doc, XPathConstants.NODESET);
+		   
+		   numFigure = 0;
+		   
+		   for (int i = 0; i < nlTables.getLength(); i++) {
+			   Node nTable = nlTables.item(i);
+			   if (((Element) nTable).getAttribute("type").equals("Database - Table")) {
+				   NodeList nlTAtts = ((Element) nTable).getElementsByTagName("dia:attribute");
+				   for (int j = 0; j < nlTAtts.getLength(); j++) {
+					   Node nTAtt = nlTAtts.item(j);
+					   String attName = ((Element) nTAtt).getAttribute("name");
+					   String text = "";
+					   if (attName.equals("name") && nTAtt.getParentNode().equals(nTable)) {
+						   NodeList nlTemp = ((Element) nTAtt).getElementsByTagName("dia:string");
+						   Node nTName = nlTemp.item(0);
+						   text = nTName.getTextContent();
+						   text = text.replaceAll("#", "").replaceAll("#", "");
+						   //System.out.println(nTName.getTextContent());
+						   
+						   if (isTableDup(text)) {
+			                   JOptionPane.showMessageDialog(null, "There are multiple tables called " + text + " in this diagram.\nPlease rename all but one of them and try again.");
+			                   EdgeConvertGUI.setReadSuccess(false);
+			                   break;
+			               }
+						   
+						   alTables.add(new EdgeTable(numFigure + DELIM + text));
+						   
+					   } else if (attName.equals("attributes")) {
+						   NodeList nlAtts = ((Element) nTAtt).getElementsByTagName("dia:composite");
+						   //int numAtt = 0;
+						   for (int k = 0; k < nlAtts.getLength(); k++) {
+							   Node nAtts = nlAtts.item(k);
+							   NodeList nAAtts = ((Element) nAtts).getElementsByTagName("dia:attribute");
+							   
+							   for (int l = 0; l < nAAtts.getLength(); l++) {
+								   Node nAAtt = nAAtts.item(l);
+								   attName = ((Element) nAAtt).getAttribute("name");
+								   if (attName.equals("name")) {
+									   NodeList nlTemp = ((Element) nAAtt).getElementsByTagName("dia:string");
+									   text = nlTemp.item(0).getTextContent();
+									   text = text.replaceAll("#", "").replaceAll("#", "");
+									   text += DELIM + numFigure;
+									   System.out.println(text + DELIM + numAtt);
+									   tempField = new EdgeField(numAtt + DELIM + text);
+									   alFields.add(tempField);
+									   EdgeTable et = (EdgeTable) alTables.get(i);				               
+						               et.addNativeField(numAtt);
+								   } else if (attName.equals("primary_key")) {
+									   NodeList nlTemp = ((Element) nAAtt).getElementsByTagName("dia:boolean");
+									   Boolean isPK = false;
+									   if (((Element)nlTemp.item(0)).getAttribute("value").equals("true")) {
+										   isPK = true;
+									   }
+									   tempField.setIsPrimaryKey(isPK);
+								   }	
+							   }							   
+				               numAtt += 1;				               						   
+						   }							   
+					   }
+				   }
+			   }
+			   numFigure += 1;
+		   }
+		   
+	   
+	   } catch (ParserConfigurationException pce) {
+		   System.out.println("An error occured before parsing (dia)");
+		   System.exit(0);
+	   } catch (SAXException se) {
+		   System.out.println("An error occured while parsing (dia)");
+		   System.exit(0);
+	   } catch (XPathExpressionException xee) {
+		   System.out.println("An error occured while reading xml (dia)");
+		   System.exit(0);
+	   }
    }
    
+   private void resolveXML() {
+	   	   
+	   for (XMLTable xt : alXML) {		   
+		   for (XMLTable x : alXML) {
+			   if (xt.getFromRelation() != "") {
+				   if (x.getToRelation() != "") {
+					   if (xt.getFromRelation().equals(x.getToRelation())) {
+						   tables[xt.getTableNum()].addRelatedTable(x.getTableNum());
+						   System.out.println("Table XT NumFigure " + tables[xt.getTableNum()].getNumFigure());
+						   System.out.println("Table X NumFigure " + tables[xt.getTableNum()].getNumFigure());
+						   tables[x.getTableNum()].addRelatedTable(xt.getTableNum());
+						   //tables[x.getTableNum()].addRelatedTable(tables[xt.getTableNum()].getNumFigure());
+					   }
+				   }
+			   }
+		   }
+	   }
+   }
    
    private void resolveConnectors() { //Identify nature of Connector endpoints
       int endPoint1, endPoint2;
@@ -275,6 +466,15 @@ public class EdgeConvertFileParser {
       }
    }
    
+   private void makeXMLArrays() {
+	   if (alTables != null) {
+	         tables = (EdgeTable[])alTables.toArray(new EdgeTable[alTables.size()]);
+	      }
+	      if (alFields != null) {
+	         fields = (EdgeField[])alFields.toArray(new EdgeField[alFields.size()]);
+	      }
+   }
+   
    private boolean isTableDup(String testTableName) {
       for (int i = 0; i < alTables.size(); i++) {
          EdgeTable tempTable = (EdgeTable)alTables.get(i);
@@ -316,22 +516,23 @@ public class EdgeConvertFileParser {
              this.makeArrays(); //convert ArrayList objects into arrays of the appropriate Class type
         	 break;
         	 
-         case "<?xml version="+"'1.0'"+" encoding="+"'UTF-8'"+"?>":
+         case "<?xml version=\"1.0\" encoding=\"UTF-8\"?>":
         	 
-        	 	if(br.readLine().contentEquals("dia")){
+        	 	if(br.readLine().contains("dia")){
         	 		System.out.println("parsing dia");
-             		this.ParseXML();
+             		this.ParseDia(inputFile);
              		br.close();
-             		this.resolveConnectors();
-             		this.makeArrays();
+             		this.makeXMLArrays();
+             		//this.resolveXML();
         	 	}
         	 		
         	 	else{
         	 		System.out.println("parsing xml");
-             		this.ParseXML();
-             		br.close();
-             		this.resolveConnectors();
-             		this.makeArrays();
+             		this.ParseXML(inputFile);
+             		br.close();             		
+             		//this.resolveConnectors();
+             		this.makeXMLArrays();
+             		this.resolveXML();
         	 	}	
         	 	
         	 break;

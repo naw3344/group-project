@@ -22,6 +22,7 @@ public class EdgeConvertFileParser {
    private String currentLine;
    private ArrayList alTables, alFields, alConnectors;
    private ArrayList<XMLTable> alXML;
+   private ArrayList<DIATable> alDIA;
    private EdgeTable[] tables;
    private EdgeField[] fields;
    private EdgeField tempField;
@@ -226,6 +227,7 @@ public class EdgeConvertFileParser {
 	   Document doc;
 	   XPath path;
 	   int numAtt = 0;
+	   int numTables = 0;
 	   
 	   try {
 		   DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -234,6 +236,8 @@ public class EdgeConvertFileParser {
 		   path = xpfactory.newXPath();
 		   
 		   doc = builder.parse(f);
+		   
+		   alXML = new ArrayList<XMLTable>();
 		   
 		   NodeList nlTables = (NodeList) path.compile("/diagram/layer/object").evaluate(doc, XPathConstants.NODESET);
 		   
@@ -261,7 +265,7 @@ public class EdgeConvertFileParser {
 			               }
 						   
 						   alTables.add(new EdgeTable(numFigure + DELIM + text));
-						   
+						   numTables += 1;
 					   } else if (attName.equals("attributes")) {
 						   NodeList nlAtts = ((Element) nTAtt).getElementsByTagName("dia:composite");
 						   //int numAtt = 0;
@@ -277,7 +281,7 @@ public class EdgeConvertFileParser {
 									   text = nlTemp.item(0).getTextContent();
 									   text = text.replaceAll("#", "").replaceAll("#", "");
 									   text += DELIM + numFigure;
-									   System.out.println(text + DELIM + numAtt);
+									   System.out.println(numAtt + DELIM + text );
 									   tempField = new EdgeField(numAtt + DELIM + text);
 									   alFields.add(tempField);
 									   EdgeTable et = (EdgeTable) alTables.get(i);				               
@@ -295,7 +299,31 @@ public class EdgeConvertFileParser {
 						   }							   
 					   }
 				   }
+			   } else if (((Element) nTable).getAttribute("type").equals("Database - Reference")) {
+				   NodeList nlTemp = ((Element) nTable).getElementsByTagName("dia:connections");
+				   NodeList nlTemp2 = ((Element) nlTemp.item(0)).getElementsByTagName("dia:connection");
+				   String toRel = "";
+				   String fromRel = "";
+				   for (int j = 0; j < nlTemp2.getLength(); j++) {
+					   Node nTemp = nlTemp2.item(j);
+					   if (toRel.equals("")) {
+						   toRel = ((Element) nTemp).getAttribute("to");
+					   } else {
+						   fromRel = ((Element) nTemp).getAttribute("to");
+					   }					   
+				   }
+				   
+				   toRel = toRel.replaceAll("O", "");
+				   fromRel = fromRel.replaceAll("O", "");
+				   int numParam = Integer.parseInt(fromRel);
+				   
+				   System.out.println("toRel " + toRel + " fromRel " + fromRel);
+				   
+				   XMLTable diaRelation = new XMLTable(numParam, toRel, fromRel);
+				   alXML.add(diaRelation);
+				   
 			   }
+			   
 			   numFigure += 1;
 		   }
 		   
@@ -523,7 +551,7 @@ public class EdgeConvertFileParser {
              		this.ParseDia(inputFile);
              		br.close();
              		this.makeXMLArrays();
-             		//this.resolveXML();
+             		this.resolveXML();
         	 	}
         	 		
         	 	else{

@@ -22,7 +22,6 @@ public class EdgeConvertFileParser {
    private String currentLine;
    private ArrayList alTables, alFields, alConnectors;
    private ArrayList<XMLTable> alXML;
-   private ArrayList<DIATable> alDIA;
    private EdgeTable[] tables;
    private EdgeField[] fields;
    private EdgeField tempField;
@@ -256,7 +255,6 @@ public class EdgeConvertFileParser {
 						   Node nTName = nlTemp.item(0);
 						   text = nTName.getTextContent();
 						   text = text.replaceAll("#", "").replaceAll("#", "");
-						   //System.out.println(nTName.getTextContent());
 						   
 						   if (isTableDup(text)) {
 			                   JOptionPane.showMessageDialog(null, "There are multiple tables called " + text + " in this diagram.\nPlease rename all but one of them and try again.");

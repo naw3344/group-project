@@ -211,13 +211,10 @@ public class EdgeConvertFileParser {
 	   
 	   } catch (ParserConfigurationException pce) {
 		   System.out.println("An error occured before parsing");
-		   System.exit(0);
 	   } catch (SAXException se) {
 		   System.out.println("An error occured while parsing");
-		   System.exit(0);
 	   } catch (XPathExpressionException xee) {
 		   System.out.println("An error occured while reading xml");
-		   System.exit(0);
 	   }
    }
    
@@ -279,7 +276,7 @@ public class EdgeConvertFileParser {
 									   text = nlTemp.item(0).getTextContent();
 									   text = text.replaceAll("#", "").replaceAll("#", "");
 									   text += DELIM + numFigure;
-									   System.out.println(numAtt + DELIM + text );
+									  // System.out.println(numAtt + DELIM + text );
 									   tempField = new EdgeField(numAtt + DELIM + text);
 									   alFields.add(tempField);
 									   EdgeTable et = (EdgeTable) alTables.get(i);				               
@@ -328,13 +325,10 @@ public class EdgeConvertFileParser {
 	   
 	   } catch (ParserConfigurationException pce) {
 		   System.out.println("An error occured before parsing (dia)");
-		   System.exit(0);
 	   } catch (SAXException se) {
 		   System.out.println("An error occured while parsing (dia)");
-		   System.exit(0);
 	   } catch (XPathExpressionException xee) {
 		   System.out.println("An error occured while reading xml (dia)");
-		   System.exit(0);
 	   }
    }
    

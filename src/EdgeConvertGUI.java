@@ -90,7 +90,7 @@ public class EdgeConvertGUI {
       jfDT = new JFrame(DEFINE_TABLES);
       jfDT.setLocation(HORIZ_LOC, VERT_LOC);
       Container cp = jfDT.getContentPane();
-      jfDT.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+      jfDT.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       jfDT.addWindowListener(edgeWindowListener);
       jfDT.getContentPane().setLayout(new BorderLayout());
       jfDT.setVisible(true);
